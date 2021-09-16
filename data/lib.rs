@@ -3,8 +3,8 @@
 use ink_lang as ink;
 
 #[ink::contract]
-mod data {
-    use ink_prelude::{vec as std_vec, vec::Vec as StdVec};
+pub mod contract {
+    use ink_prelude::vec::Vec as StdVec;
 
     #[ink(storage)]
     pub struct Data {
@@ -15,9 +15,12 @@ mod data {
     impl Data {
         #[ink(constructor)]
         pub fn new(init_value: bool) -> Self {
+            let mut allowlist = StdVec::with_capacity(1);
+            allowlist.push(Self::env().caller());
+
             Self {
                 value: init_value,
-                allowlist: std_vec![Self::env().caller()],
+                allowlist,
             }
         }
 
