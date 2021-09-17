@@ -21,8 +21,10 @@ data = { version = "0.1.0", path = "../data", default-features = false, features
 name = "logic"
 path = "lib.rs"
 crate-type = [
-	# Used for normal contract Wasm blobs.
-	"cdylib",
+    # Used for normal contract Wasm blobs.
+    "cdylib",
+    # Used for ABI generation.
+    "rlib",
 ]
 
 [features]

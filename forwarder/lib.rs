@@ -3,72 +3,66 @@
 use ink_lang as ink;
 
 #[ink::contract]
-mod forwarder {
+mod contract {
+    use ink_env::call::FromAccountId;
+    use ink_prelude::vec::Vec as StdVec;
+    use logic::contract::Logic;
 
-    /// Defines the storage of your contract.
-    /// Add new fields to the below struct in order
-    /// to add new static storage fields to your contract.
     #[ink(storage)]
     pub struct Forwarder {
-        /// Stores a single `bool` value on the storage.
-        value: bool,
+        logic_account_id: AccountId,
+        allowlist: StdVec<AccountId>,
     }
 
     impl Forwarder {
-        /// Constructor that initializes the `bool` value to the given `init_value`.
         #[ink(constructor)]
-        pub fn new(init_value: bool) -> Self {
-            Self { value: init_value }
+        pub fn new(logic_account_id: AccountId) -> Self {
+            let mut allowlist = StdVec::with_capacity(1);
+            allowlist.push(Self::env().caller());
+
+            Self {
+                logic_account_id,
+                allowlist,
+            }
         }
 
-        /// Constructor that initializes the `bool` value to `false`.
-        ///
-        /// Constructors can delegate to other constructors.
-        #[ink(constructor)]
-        pub fn default() -> Self {
-            Self::new(Default::default())
-        }
-
-        /// A message that can be called on instantiated contracts.
-        /// This one flips the value of the stored `bool` from `true`
-        /// to `false` and vice versa.
         #[ink(message)]
-        pub fn flip(&mut self) {
-            self.value = !self.value;
+        pub fn do_something(&self) {
+            let logic = Logic::from_account_id(self.logic_account_id);
+            logic.do_something();
         }
 
-        /// Simply returns the current value of our `bool`.
         #[ink(message)]
-        pub fn get(&self) -> bool {
-            self.value
-        }
-    }
-
-    /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
-    /// module and test functions are marked with a `#[test]` attribute.
-    /// The below code is technically just normal Rust code.
-    #[cfg(test)]
-    mod tests {
-        /// Imports all the definitions from the outer scope so we can use them here.
-        use super::*;
-
-        /// Imports `ink_lang` so we can use `#[ink::test]`.
-        use ink_lang as ink;
-
-        /// We test if the default constructor does its job.
-        #[ink::test]
-        fn default_works() {
-            let forwarder = Forwarder::default();
-            assert_eq!(forwarder.get(), false);
+        pub fn get_logic_account_id(&self) -> AccountId {
+            self.logic_account_id
         }
 
-        /// We test a simple use case of our contract.
-        #[ink::test]
-        fn it_works() {
-            let mut forwarder = Forwarder::new(false);
-            assert_eq!(forwarder.get(), false);
-            forwarder.flip();
-            assert_eq!(forwarder.get(), true);
+        #[ink(message)]
+        pub fn change_logic_account_id(&mut self, new_account_id: AccountId) {
+            self.logic_account_id = new_account_id;
+        }
+
+        // allowlist
+
+        #[ink(message)]
+        pub fn get_allowlist(&self) -> StdVec<AccountId> {
+            self.allowlist.clone()
+        }
+
+        #[ink(message)]
+        pub fn add_allowed_account(&mut self, new_account_id: AccountId) {
+            self.only_allowlist_account();
+            self.allowlist.push(new_account_id);
+        }
+
+        #[ink(message)]
+        pub fn remove_allowed_account(&mut self, account_id: AccountId) {
+            self.only_allowlist_account();
+            self.allowlist.retain(|a| a != &account_id);
+        }
+
+        fn only_allowlist_account(&self) {
+            assert!(self.allowlist.contains(&self.env().caller()), "not allowed");
         }
     }
 }

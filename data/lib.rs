@@ -30,26 +30,32 @@ pub mod contract {
         }
 
         #[ink(message)]
+        pub fn set(&mut self, new_value: bool) {
+            self.only_allowlist_account();
+            self.value = new_value;
+        }
+
+        // allowlist
+
+        #[ink(message)]
         pub fn get_allowlist(&self) -> StdVec<AccountId> {
             self.allowlist.clone()
         }
 
         #[ink(message)]
-        pub fn set(&mut self, new_value: bool) {
-            assert!(self.allowlist.contains(&self.env().caller()), "not allowed");
-            self.value = new_value;
-        }
-
-        #[ink(message)]
         pub fn add_allowed_account(&mut self, new_account_id: AccountId) {
-            assert!(self.allowlist.contains(&self.env().caller()), "not allowed");
+            self.only_allowlist_account();
             self.allowlist.push(new_account_id);
         }
 
         #[ink(message)]
         pub fn remove_allowed_account(&mut self, account_id: AccountId) {
-            assert!(self.allowlist.contains(&self.env().caller()), "not allowed");
+            self.only_allowlist_account();
             self.allowlist.retain(|a| a != &account_id);
+        }
+
+        fn only_allowlist_account(&self) {
+            assert!(self.allowlist.contains(&self.env().caller()), "not allowed");
         }
     }
 }

@@ -3,7 +3,7 @@
 use ink_lang as ink;
 
 #[ink::contract]
-mod logic {
+pub mod contract {
     use data::contract::Data;
     use ink_env::call::FromAccountId;
 
@@ -24,7 +24,7 @@ mod logic {
         }
 
         #[ink(message)]
-        pub fn set(&self) {
+        pub fn do_something(&self) {
             let mut data = Data::from_account_id(self.data_account_id);
             data.set(true);
         }
