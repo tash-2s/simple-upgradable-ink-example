@@ -39,6 +39,7 @@ mod contract {
 
         #[ink(message)]
         pub fn change_logic_account_id(&mut self, new_account_id: AccountId) {
+            self.only_allowlist_account();
             self.logic_account_id = new_account_id;
         }
 
